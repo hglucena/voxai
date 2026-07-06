@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VoxAi — Faça seu teste vocal</title>
+<meta name="description" content="Triagem vocal por IA: grave a vogal /a/ e a contagem de 1 a 10 e receba uma estimativa do grau de disfonia (G0–G3). Sem conta, direto no navegador." />
+<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<style>
+  :root{
+    --primary:#15b8c8; --primary:oklch(0.72 0.13 195);
+    --secondary:#6d28d9; --secondary:oklch(0.45 0.22 292);
+    --ink:#141b2d; --ink:oklch(0.20 0.04 265);
+    --mut:#5b6472; --mut:oklch(0.50 0.02 260);
+    --bg:#ffffff; --soft:#f4f7fb; --line:#e6ebf2; --card:#fff;
+    --radius:22px; --radius-sm:14px;
+    --shadow-sm:0 1px 3px rgba(20,27,45,.06),0 1px 2px rgba(20,27,45,.04);
+    --shadow-md:0 12px 32px -12px rgba(30,25,80,.22),0 4px 12px rgba(20,27,45,.06);
+    --shadow-lg:0 30px 60px -20px rgba(40,25,110,.28),0 10px 24px rgba(20,27,45,.08);
+    --grad:linear-gradient(120deg,var(--primary),var(--secondary));
+    --g0:oklch(0.72 0.17 150); --g1:oklch(0.80 0.15 85); --g2:oklch(0.70 0.17 55); --g3:oklch(0.62 0.22 27);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--soft);line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100dvh;}
+  a{color:inherit;}
+  img{max-width:100%;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px;}
+  header.top{background:rgba(255,255,255,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
+  .top-inner{display:flex;align-items:center;justify-content:space-between;height:62px;max-width:760px;margin:0 auto;padding:0 20px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;text-decoration:none;}
+  .brand img{height:30px;}
+  .back{font-size:14px;font-weight:600;color:var(--mut);text-decoration:none;}
+  .back:hover{color:var(--primary);}
+  main{padding:34px 0 60px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-md);padding:32px 28px;}
+  h1{font-size:clamp(24px,4vw,32px);font-weight:850;letter-spacing:-.02em;margin:0 0 6px;}
+  h2{font-size:22px;font-weight:800;margin:0;letter-spacing:-.01em;}
+  .sub{color:var(--mut);margin:0 0 4px;}
+  .eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--secondary);background:color-mix(in oklab,var(--secondary) 10%,white);padding:6px 13px;border-radius:20px;margin-bottom:16px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;font-weight:700;font-size:15px;padding:13px 24px;border-radius:13px;border:0;text-decoration:none;transition:transform .12s,box-shadow .2s,filter .2s;font-family:inherit;}
+  .btn:active{transform:scale(.97);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-primary{background:var(--grad);color:#fff;box-shadow:0 8px 22px -8px color-mix(in oklab,var(--secondary) 70%,transparent);}
+  .btn-primary:hover:not(:disabled){filter:brightness(1.07);}
+  .btn-ghost{background:var(--soft);color:var(--ink);}
+  .btn-ghost:hover{background:#e9eef6;}
+  .btn-danger{background:oklch(0.60 0.20 25);color:#fff;}
+  .steps-intro{display:flex;flex-direction:column;gap:12px;margin:22px 0 26px;text-align:left;}
+  .si{display:flex;gap:14px;align-items:flex-start;}
+  .si .n{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#fff;background:var(--grad);}
+  .si b{display:block;font-size:15.5px;}
+  .si span{color:var(--mut);font-size:14px;}
+  .tips{background:var(--soft);border-radius:var(--radius-sm);padding:16px 18px;text-align:left;font-size:14px;color:var(--mut);margin-bottom:24px;}
+  .tips b{color:var(--ink);}
+  .tips ul{margin:8px 0 0;padding-left:18px;}
+  .center{text-align:center;}
+  .taskbar{display:flex;gap:8px;justify-content:center;margin-bottom:20px;}
+  .taskchip{font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:20px;background:var(--soft);color:var(--mut);border:1px solid var(--line);}
+  .taskchip.active{background:color-mix(in oklab,var(--primary) 12%,white);color:var(--secondary);border-color:color-mix(in oklab,var(--primary) 30%,white);}
+  .taskchip.done{background:color-mix(in oklab,var(--g0) 14%,white);color:var(--g0);border-color:color-mix(in oklab,var(--g0) 30%,white);}
+  .bars{display:flex;align-items:flex-end;justify-content:center;gap:5px;height:96px;margin:8px 0 4px;}
+  .bars i{display:block;width:6px;border-radius:6px;background:var(--grad);height:8px;transition:height .1s ease;opacity:.35;}
+  .timer{font-variant-numeric:tabular-nums;font-size:26px;font-weight:800;color:var(--secondary);text-align:center;}
+  .timer small{font-size:13px;color:var(--mut);font-weight:600;margin-left:6px;}
+  .count{width:104px;height:104px;margin:6px auto;border-radius:50%;display:grid;place-items:center;font-size:52px;font-weight:850;color:var(--secondary);background:color-mix(in oklab,var(--primary) 14%,white);animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  .rec-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:oklch(0.6 0.2 25);animation:blink 1s infinite;margin-right:7px;vertical-align:middle;}
+  @keyframes blink{50%{opacity:.3}}
+  .msg{border-radius:var(--radius-sm);padding:14px 16px;font-size:14px;margin:16px 0;text-align:left;display:flex;gap:9px;align-items:flex-start;}
+  .msg-warn{background:color-mix(in oklab,var(--g3) 10%,white);color:var(--g3);}
+  .msg-ok{background:color-mix(in oklab,var(--g0) 12%,white);color:var(--g0);}
+  .row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px;}
+  .screen{display:none;}
+  .screen.on{display:block;animation:fade .3s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  /* analyzing */
+  .an-bars{display:flex;align-items:flex-end;justify-content:center;gap:6px;height:64px;margin:6px 0 22px;}
+  .an-bars i{width:6px;border-radius:6px;background:var(--grad);animation:eq 1.4s ease-in-out infinite;}
+  @keyframes eq{0%,100%{height:20%}50%{height:100%}}
+  .an-steps{list-style:none;padding:0;margin:18px 0 0;text-align:left;display:flex;flex-direction:column;gap:8px;}
+  .an-steps li{display:flex;gap:11px;align-items:center;font-size:14.5px;color:var(--mut);padding:9px 13px;border-radius:12px;transition:background .2s;}
+  .an-steps li.active{background:color-mix(in oklab,var(--primary) 10%,white);color:var(--secondary);font-weight:600;}
+  .an-steps li.done{color:var(--g0);}
+  .dot{width:16px;height:16px;border-radius:50%;border:2px solid color-mix(in oklab,var(--mut) 40%,white);flex:0 0 auto;}
+  .an-steps li.active .dot{border-color:var(--primary);border-right-color:transparent;animation:spin .7s linear infinite;}
+  .an-steps li.done .dot{border-color:var(--g0);background:var(--g0);}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .hint{color:var(--mut);font-size:13px;margin-top:16px;min-height:18px;}
+  /* result */
+  .grade{width:120px;height:120px;margin:4px auto 10px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:44px;font-weight:850;box-shadow:var(--shadow-lg);}
+  .gauge{position:relative;height:14px;border-radius:8px;margin:26px 0 8px;overflow:hidden;display:flex;}
+  .gauge span{display:block;height:100%;}
+  .gmark{position:absolute;top:-7px;width:4px;height:28px;background:var(--ink);border-radius:3px;transform:translateX(-50%);box-shadow:0 0 0 2px #fff;}
+  .glabels{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);}
+  .measures{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:14px;}
+  .meas{background:var(--soft);border-radius:11px;padding:9px 12px;font-size:13px;}
+  .meas b{display:block;font-size:14.5px;color:var(--ink);}
+  .meas span{color:var(--mut);font-size:11.5px;}
+  .meas.imp b{color:var(--mut);}
+  details{margin-top:22px;border-top:1px solid var(--line);padding-top:16px;}
+  summary{cursor:pointer;font-weight:700;font-size:14.5px;color:var(--secondary);}
+  .disc{font-size:12px;color:var(--mut);margin-top:20px;text-align:center;opacity:.9;}
+  audio{width:100%;margin-top:6px;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="index.html"><img src="logo.png" alt="VoxAi" /> VoxAi</a>
+    <a class="back" href="index.html">← Voltar ao site</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <!-- INTRO -->
+    <section id="intro" class="screen on">
+      <div class="card center">
+        <div class="eyebrow">🎙️ Triagem vocal</div>
+        <h1>Faça seu teste em 2 gravações</h1>
+        <p class="sub">Sem conta, sem instalar nada. A análise acontece na hora e nada é salvo.</p>
+        <div class="steps-intro">
+          <div class="si"><div class="n">1</div><div><b>Vogal /a/ sustentada</b><span>Inspire e emita um “/a/” contínuo e estável por ~5 segundos.</span></div></div>
+          <div class="si"><div class="n">2</div><div><b>Contagem de 1 a 10</b><span>Conte “um, dois, três…” até dez, em ritmo e volume naturais.</span></div></div>
+          <div class="si"><div class="n">3</div><div><b>Resultado</b><span>O VoxAi estima o grau geral de disfonia (G0–G3) a partir da sua voz.</span></div></div>
+        </div>
+        <div class="tips">
+          <b>Para uma boa análise:</b>
+          <ul>
+            <li>Ambiente silencioso, a ~10 cm do microfone.</li>
+            <li>Você poderá ouvir e refazer cada gravação antes de enviar.</li>
+          </ul>
+        </div>
+        <button id="btn-start" class="btn btn-primary">Permitir microfone e iniciar</button>
+        <p class="disc">Ferramenta de triagem e demonstração — não substitui avaliação de um fonoaudiólogo.</p>
+      </div>
+    </section>
+
+    <!-- RECORDER -->
+    <section id="rec" class="screen">
+      <div class="card center">
+        <div class="taskbar">
+          <span class="taskchip" id="chip-vogal">1 · Vogal /a/</span>
+          <span class="taskchip" id="chip-contagem">2 · Contagem 1–10</span>
+        </div>
+        <div id="rec-body"><!-- preenchido via JS --></div>
+      </div>
+    </section>
+
+    <!-- ANALYZING -->
+    <section id="analyzing" class="screen">
+      <div class="card center">
+        <div class="an-bars" aria-hidden="true">
+          <i style="animation-delay:0s"></i><i style="animation-delay:.12s"></i><i style="animation-delay:.24s"></i>
+          <i style="animation-delay:.36s"></i><i style="animation-delay:.48s"></i><i style="animation-delay:.24s"></i>
+          <i style="animation-delay:.12s"></i><i style="animation-delay:.4s"></i><i style="animation-delay:.2s"></i>
+        </div>
+        <h2>Analisando sua voz…</h2>
+        <ul class="an-steps">
+          <li id="st-extraindo"><span class="dot"></span> Enviando o áudio e extraindo as medidas da voz</li>
+          <li id="st-classificando"><span class="dot"></span> Classificando o grau vocal (G0–G3)</li>
+        </ul>
+        <p class="hint" id="an-hint"></p>
+      </div>
+    </section>
+
+    <!-- RESULT -->
+    <section id="result" class="screen">
+      <div class="card">
+        <div class="center">
+          <div class="eyebrow">Resultado da triagem</div>
+          <div class="grade" id="r-grade">–</div>
+          <h2 id="r-title">—</h2>
+          <p class="sub" id="r-msg" style="max-width:520px;margin:10px auto 0;"></p>
+        </div>
+        <div class="gauge" id="r-gauge"></div>
+        <div class="glabels"><span>0</span><span>G0</span><span>G1</span><span>G2</span><span>G3</span><span>100</span></div>
+        <div id="r-limite"></div>
+        <details>
+          <summary>Ver as 20 medidas acústicas extraídas</summary>
+          <div class="measures" id="r-measures"></div>
+          <p class="disc" id="r-imp" style="text-align:left;"></p>
+        </details>
+        <div class="row" style="margin-top:24px;">
+          <button id="btn-again" class="btn btn-ghost">↺ Refazer teste</button>
+          <a class="btn btn-primary" href="index.html">Conhecer o VoxAi</a>
+        </div>
+        <p class="disc">⚠️ Isto é uma triagem automatizada de demonstração — não é diagnóstico. A avaliação final é sempre de um fonoaudiólogo.</p>
+      </div>
+    </section>
+
+    <!-- ERROR -->
+    <section id="error" class="screen">
+      <div class="card center">
+        <div class="grade" style="background:var(--g3);font-size:40px;">!</div>
+        <h2>Não foi possível concluir</h2>
+        <p class="sub" id="err-msg" style="max-width:520px;margin:10px auto 18px;"></p>
+        <button id="btn-retry" class="btn btn-primary">Tentar de novo</button>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+"use strict";
+const EXTRATOR = "https://theyzer-extrator-grbasi.hf.space";
+const GRBASI   = "https://theyzer-grbasi-api.hf.space";
+
+const RMS_MIN = 0.012;
+const TAREFAS = {
+  vogal:    { key:"vogal",    titulo:"Vogal /a/ sustentada", instr:"Inspire e sustente um “/a/” contínuo e estável por cerca de 5 segundos.", alvo:5, min:3, max:8,  voicedMin:0.35, proximo:"Continuar →" },
+  contagem: { key:"contagem", titulo:"Contagem de 1 a 10",   instr:"Conte em voz alta: “um, dois, três… ” até dez, em ritmo e volume naturais.", alvo:10, min:4, max:15, voicedMin:0.15, proximo:"Enviar para análise →" },
+};
+const GRAUS = {
+  0:{rotulo:"G0",nome:"voz normal",cor:"var(--g0)",desc:"Sua voz não sugere alteração."},
+  1:{rotulo:"G1",nome:"disfonia leve",cor:"var(--g1)",desc:"Sinais leves — vale acompanhar."},
+  2:{rotulo:"G2",nome:"disfonia moderada",cor:"var(--g2)",desc:"Sinais perceptíveis — recomenda-se avaliação."},
+  3:{rotulo:"G3",nome:"disfonia intensa",cor:"var(--g3)",desc:"Sinais importantes — buscar avaliação com prioridade."},
+};
+const MEDIDAS_20 = [
+  ["f0media","f0 média","Hz"],["f0dp","f0 desvio-padrão","Hz"],["f0q1","f0 quartil 1","Hz"],["f0CV","f0 coef. variação","%"],
+  ["jitterLoc","Jitter local","%"],["jitterABS","Jitter absoluto","s"],["jitterPPQ5","Jitter PPQ5","%"],
+  ["shimmerLoc","Shimmer local","%"],["shimmerdB","Shimmer","dB"],["CPP","CPP","dB"],["CPPS","CPPS","dB"],
+  ["H1A3","H1–A3","dB"],["GNE1000HZ","GNE 1000 Hz",""],["GNE2000HZ","GNE 2000 Hz",""],["GNE3000HZ","GNE 3000 Hz",""],
+  ["Hfno","Hfno",""],["HNRmedia","HNR média","dB"],["HNRdp","HNR desvio-padrão","dB"],["HNRD","HNRD","dB"],["SNL100_3000HZ","SNL 100–3000 Hz","dB"],
+];
+
+const $ = id => document.getElementById(id);
+function show(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); $(id).classList.add("on"); window.scrollTo({top:0,behavior:"smooth"}); }
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+const clickOnce = el => new Promise(res=>el.addEventListener("click",res,{once:true}));
+
+// ---------- captura de áudio ----------
+let stream=null, ctx=null, proc=null, chunks=[], voiced=0, frames=0, sr=44100;
+async function startCapture(onLevel){
+  stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  const AC = window.AudioContext||window.webkitAudioContext;
+  ctx = new AC(); sr = ctx.sampleRate;
+  const src = ctx.createMediaStreamSource(stream);
+  proc = ctx.createScriptProcessor(4096,1,1);
+  chunks=[]; voiced=0; frames=0;
+  proc.onaudioprocess = e=>{
+    const d = e.inputBuffer.getChannelData(0);
+    chunks.push(new Float32Array(d));
+    let s=0; for(let i=0;i<d.length;i++) s+=d[i]*d[i];
+    const rms=Math.sqrt(s/d.length);
+    frames++; if(rms>RMS_MIN) voiced++;
+    onLevel(Math.min(1,rms*8));
+  };
+  src.connect(proc); proc.connect(ctx.destination);
+}
+function stopCapture(){
+  try{proc&&proc.disconnect();}catch(e){}
+  proc=null;
+  if(ctx){ctx.close().catch(()=>{});ctx=null;}
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+}
+function encodeWav(chs, rate){
+  let len=0; chs.forEach(c=>len+=c.length);
+  const pcm=new Float32Array(len); let off=0; chs.forEach(c=>{pcm.set(c,off);off+=c.length;});
+  const ab=new ArrayBuffer(44+len*2), v=new DataView(ab);
+  const wr=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  wr(0,"RIFF");v.setUint32(4,36+len*2,true);wr(8,"WAVE");wr(12,"fmt ");
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);
+  wr(36,"data");v.setUint32(40,len*2,true);
+  let p=44; for(let i=0;i<len;i++){const s=Math.max(-1,Math.min(1,pcm[i]));v.setInt16(p,s<0?s*0x8000:s*0x7fff,true);p+=2;}
+  return new Blob([v],{type:"audio/wav"});
+}
+
+// ---------- fluxo de uma tarefa ----------
+function renderBars(level, t){
+  const bars=document.querySelectorAll("#rec-body .bars i");
+  bars.forEach((b,i)=>{
+    const h = level>0 ? 8+Math.abs(Math.sin(i*0.5+t*3))*level*80 : 8;
+    b.style.height=h+"px"; b.style.opacity = level>0?1:.35;
+  });
+}
+function barsHTML(){ let s='<div class="bars" aria-hidden="true">'; for(let i=0;i<24;i++)s+='<i></i>'; return s+'</div>'; }
+
+function recordTask(cfg){
+  return new Promise(async (resolve)=>{
+    $("chip-"+cfg.key).classList.add("active");
+    const body=$("rec-body");
+
+    function idle(){
+      body.innerHTML =
+        '<h2>'+cfg.titulo+'</h2><p class="sub">'+cfg.instr+'</p>'+barsHTML()+
+        '<div class="row" style="margin-top:14px;"><button id="go" class="btn btn-primary">● Iniciar gravação</button></div>';
+      $("go").addEventListener("click", countdown, {once:true});
+    }
+    async function countdown(){
+      for(let n=3;n>=1;n--){ body.innerHTML='<div class="count">'+n+'</div><p class="sub">Prepare-se… '+(cfg.key==="vogal"?"sustente o /a/":"comece a contar")+'</p>'; await sleep(800); }
+      recording();
+    }
+    async function recording(){
+      body.innerHTML =
+        '<h2>'+cfg.titulo+'</h2><p class="sub"><span class="rec-dot"></span>Gravando… '+(cfg.key==="vogal"?"sustente o /a/":"conte até dez")+'</p>'+
+        barsHTML()+'<div class="timer"><span id="secs">0.0</span>s<small>/ meta '+cfg.alvo+'s</small></div>'+
+        '<div class="row" style="margin-top:14px;"><button id="stop" class="btn btn-danger" disabled>■ Parar</button></div>';
+      let secs=0, start=performance.now();
+      try{ await startCapture(l=>renderBars(l,(performance.now()-start)/1000)); }
+      catch(e){ stopCapture(); return fail("Não consegui acessar o microfone. Verifique a permissão do navegador e tente de novo.", true); }
+      const stopBtn=$("stop");
+      const tick=setInterval(()=>{
+        secs=(performance.now()-start)/1000;
+        $("secs").textContent=secs.toFixed(1);
+        if(secs>=0.5) stopBtn.disabled=false;
+        if(secs>=cfg.max){ done(); }
+      },100);
+      function done(){ clearInterval(tick); finish(secs); }
+      stopBtn.addEventListener("click", done, {once:true});
+    }
+    function finish(secs){
+      const vf = frames ? voiced/frames : 0;
+      const chs=chunks, rate=sr;
+      stopCapture();
+      if(secs<cfg.min) return fail("Gravação muito curta ("+secs.toFixed(1)+"s). "+(cfg.key==="vogal"?"Sustente o /a/":"A contagem")+" por pelo menos "+cfg.min+"s.");
+      if(vf<cfg.voicedMin) return fail("Não detectamos sua voz com clareza. Aproxime-se ~10 cm do microfone e fale de forma contínua.");
+      const blob=encodeWav(chs,rate); const url=URL.createObjectURL(blob);
+      body.innerHTML =
+        '<div class="msg msg-ok">✓ Voz captada ('+secs.toFixed(1)+'s). Ouça antes de continuar.</div>'+
+        '<audio controls src="'+url+'"></audio>'+
+        '<div class="row" style="margin-top:16px;"><button id="redo" class="btn btn-ghost">↺ Refazer</button><button id="next" class="btn btn-primary">'+cfg.proximo+'</button></div>';
+      $("redo").addEventListener("click", ()=>{URL.revokeObjectURL(url);idle();}, {once:true});
+      $("next").addEventListener("click", ()=>{
+        URL.revokeObjectURL(url);
+        $("chip-"+cfg.key).classList.remove("active");
+        $("chip-"+cfg.key).classList.add("done");
+        resolve(blob);
+      }, {once:true});
+    }
+    function fail(text, micIssue){
+      body.innerHTML =
+        '<div class="msg msg-warn">⚠️ '+text+'</div>'+
+        '<div class="row"><button id="retry" class="btn btn-primary">'+(micIssue?"Tentar de novo":"↺ Regravar")+'</button></div>';
+      $("retry").addEventListener("click", idle, {once:true});
+    }
+    idle();
+  });
+}
+
+// ---------- APIs ----------
+function fetchTimeout(url, opts, ms){
+  const ctrl=new AbortController();
+  const id=setTimeout(()=>ctrl.abort(), ms);
+  return fetch(url,{...opts,signal:ctrl.signal}).finally(()=>clearTimeout(id));
+}
+let coldTimer=null;
+function setStep(step){
+  ["extraindo","classificando"].forEach(s=>{
+    const li=$("st-"+s); li.classList.remove("active","done");
+    if(s===step) li.classList.add("active");
+  });
+  if(step==="classificando") $("st-extraindo").classList.add("done");
+}
+async function extrair(vogal, contagem){
+  setStep("extraindo");
+  $("an-hint").textContent="";
+  coldTimer=setTimeout(()=>{ $("an-hint").textContent="O servidor de análise está acordando (primeira análise pode levar até ~1 minuto)…"; }, 6000);
+  const fd=new FormData();
+  fd.append("vogal", new File([vogal],"vogal.wav",{type:"audio/wav"}));
+  fd.append("contagem", new File([contagem],"contagem.wav",{type:"audio/wav"}));
+  let r;
+  try{ r=await fetchTimeout(EXTRATOR+"/extrair",{method:"POST",body:fd},150000); }
+  catch(e){ throw new Error("Não consegui falar com o servidor de extração (ele pode estar iniciando). Tente novamente em alguns instantes."); }
+  finally{ clearTimeout(coldTimer); }
+  if(!r.ok){ let m="Falha na extração das medidas (HTTP "+r.status+")."; try{const j=await r.json(); if(j.erro)m=j.erro;}catch(e){} throw new Error(m); }
+  const j=await r.json();
+  return j.linha_classificar || j.features || {};
+}
+async function classificar(feats){
+  setStep("classificando");
+  $("an-hint").textContent="";
+  let r;
+  try{ r=await fetchTimeout(GRBASI+"/classificar",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(feats)},90000); }
+  catch(e){ throw new Error("Não consegui falar com o servidor de classificação. Tente novamente em alguns instantes."); }
+  if(!r.ok) throw new Error("Falha ao classificar (HTTP "+r.status+").");
+  return r.json();
+}
+
+// ---------- resultado ----------
+function showResult(res, feats){
+  const g = GRAUS[res.grau] || GRAUS[0];
+  $("r-grade").textContent = res.grau_rotulo || g.rotulo;
+  $("r-grade").style.background = g.cor;
+  $("r-title").textContent = (res.grau_rotulo||g.rotulo)+" · "+(res.classificacao||g.nome);
+  $("r-msg").textContent = res.mensagem || g.desc;
+  // gauge
+  const cuts=[28.25,48.85,71.05], cols=["var(--g0)","var(--g1)","var(--g2)","var(--g3)"];
+  const segs=[[0,cuts[0]],[cuts[0],cuts[1]],[cuts[1],cuts[2]],[cuts[2],100]];
+  let gh=""; segs.forEach((s,i)=>{ gh+='<span style="width:'+((s[1]-s[0]))+'%;background:'+cols[i]+'"></span>'; });
+  const score=Math.max(0,Math.min(100, res.score_GG!=null?res.score_GG:0));
+  gh+='<div class="gmark" style="left:'+score+'%"></div>';
+  $("r-gauge").innerHTML=gh;
+  // limite
+  $("r-limite").innerHTML = res.limite && res.alerta_limite ? '<div class="msg msg-warn" style="margin-top:18px;">⚠️ '+res.alerta_limite+'</div>' : "";
+  // medidas
+  const imp = new Set(res.imputadas||[]);
+  let mh=""; MEDIDAS_20.forEach(([k,label,un])=>{
+    const v=feats[k];
+    const val = (v==null||isNaN(v)) ? "—" : (Math.abs(v)>=100?Math.round(v):Number(v).toFixed(2));
+    mh+='<div class="meas'+(imp.has(k)?' imp':'')+'"><b>'+val+(un&&val!=="—"?' <span style="font-size:11px;color:var(--mut)">'+un+'</span>':'')+'</b><span>'+label+(imp.has(k)?' · estimada':'')+'</span></div>';
+  });
+  $("r-measures").innerHTML=mh;
+  $("r-imp").textContent = imp.size ? ("Medidas “estimadas” não puderam ser calculadas do seu áudio e foram preenchidas pela mediana do conjunto de treino ("+imp.size+" de 20).") : "";
+  show("result");
+}
+
+// ---------- orquestração ----------
+async function run(){
+  show("intro");
+  await clickOnce($("btn-start"));
+  $("chip-vogal").className="taskchip"; $("chip-contagem").className="taskchip";
+  show("rec");
+  const vogal = await recordTask(TAREFAS.vogal);
+  const contagem = await recordTask(TAREFAS.contagem);
+  show("analyzing");
+  try{
+    const feats = await extrair(vogal, contagem);
+    const res = await classificar(feats);
+    showResult(res, feats);
+  }catch(e){
+    $("err-msg").textContent = e && e.message ? e.message : "Erro inesperado.";
+    show("error");
+  }
+}
+$("btn-again").addEventListener("click", ()=>location.reload());
+$("btn-retry").addEventListener("click", ()=>location.reload());
+run();
+</script>
+</body>
+</html>
