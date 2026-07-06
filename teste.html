@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>VoxAi — Faça seu teste vocal</title>
+<title>VoxAI · Faça seu teste vocal</title>
 <meta name="description" content="Triagem vocal por IA: grave a vogal /a/ e a contagem de 1 a 10 e receba uma estimativa do grau de disfonia (G0–G3). Sem conta, direto no navegador." />
 <link rel="icon" href="favicon.ico" sizes="any" />
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
@@ -110,7 +110,7 @@
 
 <header class="top">
   <div class="top-inner">
-    <a class="brand" href="index.html"><img src="logo.png" alt="VoxAi" /> VoxAi</a>
+    <a class="brand" href="index.html"><img src="logo.png" alt="VoxAI" /> VoxAI</a>
     <a class="back" href="index.html">← Voltar ao site</a>
   </div>
 </header>
@@ -125,9 +125,9 @@
         <h1>Faça seu teste em 2 gravações</h1>
         <p class="sub">Sem conta, sem instalar nada. A análise acontece na hora e nada é salvo.</p>
         <div class="steps-intro">
-          <div class="si"><div class="n">1</div><div><b>Vogal /a/ sustentada</b><span>Inspire e emita um “/a/” contínuo e estável por ~5 segundos.</span></div></div>
+          <div class="si"><div class="n">1</div><div><b>Vogal /a/ sustentada</b><span>Imite o som do “a” de “pá” e segure por uns 5 segundos, contínuo e estável.</span></div></div>
           <div class="si"><div class="n">2</div><div><b>Contagem de 1 a 10</b><span>Conte “um, dois, três…” até dez, em ritmo e volume naturais.</span></div></div>
-          <div class="si"><div class="n">3</div><div><b>Resultado</b><span>O VoxAi estima o grau geral de disfonia (G0–G3) a partir da sua voz.</span></div></div>
+          <div class="si"><div class="n">3</div><div><b>Resultado</b><span>O VoxAI estima o grau geral de disfonia (G0–G3) a partir da sua voz.</span></div></div>
         </div>
         <div class="tips">
           <b>Para uma boa análise:</b>
@@ -188,7 +188,7 @@
         </details>
         <div class="row" style="margin-top:24px;">
           <button id="btn-again" class="btn btn-ghost">↺ Refazer teste</button>
-          <a class="btn btn-primary" href="index.html">Conhecer o VoxAi</a>
+          <a class="btn btn-primary" href="index.html">Conhecer o VoxAI</a>
         </div>
         <p class="disc">⚠️ Isto é uma triagem automatizada de demonstração — não é diagnóstico. A avaliação final é sempre de um fonoaudiólogo.</p>
       </div>
@@ -214,7 +214,7 @@ const GRBASI   = "https://theyzer-grbasi-api.hf.space";
 
 const RMS_MIN = 0.012;
 const TAREFAS = {
-  vogal:    { key:"vogal",    titulo:"Vogal /a/ sustentada", instr:"Inspire e sustente um “/a/” contínuo e estável por cerca de 5 segundos.", alvo:5, min:3, max:8,  voicedMin:0.35, proximo:"Continuar →" },
+  vogal:    { key:"vogal",    titulo:"Vogal /a/ sustentada", instr:"Imite o som do “a” de “pá” e sustente por cerca de 5 segundos, sem variar o tom.", alvo:5, min:3, max:8,  voicedMin:0.35, proximo:"Continuar →" },
   contagem: { key:"contagem", titulo:"Contagem de 1 a 10",   instr:"Conte em voz alta: “um, dois, três… ” até dez, em ritmo e volume naturais.", alvo:10, min:4, max:15, voicedMin:0.15, proximo:"Enviar para análise →" },
 };
 const GRAUS = {
