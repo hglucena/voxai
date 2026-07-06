@@ -212,6 +212,11 @@
 const EXTRATOR = "https://theyzer-extrator-grbasi.hf.space";
 const GRBASI   = "https://theyzer-grbasi-api.hf.space";
 
+// Aquece os servidores logo na abertura da pagina: os HF Spaces dormem quando
+// ociosos, e o tempo de leitura + gravacao costuma bastar para eles acordarem.
+fetch(EXTRATOR + "/health").catch(function(){});
+fetch(GRBASI + "/health").catch(function(){});
+
 const RMS_MIN = 0.012;
 const TAREFAS = {
   vogal:    { key:"vogal",    titulo:"Vogal /a/ sustentada", instr:"Imite o som do “a” de “pá” e sustente por cerca de 5 segundos, sem variar o tom.", alvo:5, min:3, max:8,  voicedMin:0.35, proximo:"Continuar" },

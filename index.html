@@ -407,5 +407,13 @@
   </div>
 </footer>
 
+<script>
+// Aquece os servidores de analise (HF Spaces dormem quando ociosos). Assim,
+// quando o visitante terminar de ler e gravar, a primeira analise ja sai rapida.
+["https://theyzer-extrator-grbasi.hf.space/health",
+ "https://theyzer-grbasi-api.hf.space/health"].forEach(function(u){
+  fetch(u).catch(function(){});
+});
+</script>
 </body>
 </html>
