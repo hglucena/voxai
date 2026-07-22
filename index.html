@@ -126,6 +126,14 @@
   .final p{color:var(--mut);max-width:520px;margin:12px auto 0;}
   .final .btn{margin-top:22px;}
 
+  /* Graus */
+  .graus-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:36px;}
+  @media(max-width:760px){.graus-grid{grid-template-columns:1fr 1fr;}}
+  .gcard{border:1px solid var(--line);border-top:4px solid var(--gc);border-radius:var(--radius);padding:20px;background:#fff;}
+  .gcard .gtag{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:8px;background:var(--gc);color:#fff;font-weight:800;font-size:14px;}
+  .gcard b{display:block;margin-top:12px;font-size:15.5px;}
+  .gcard p{color:var(--mut);font-size:13.5px;margin:6px 0 0;}
+
   footer{padding:40px 0 52px;border-top:1px solid var(--line);color:var(--mut);font-size:14px;}
   .foot{display:flex;flex-direction:column;gap:8px;}
   .foot .brand{font-size:15px;}
@@ -141,6 +149,7 @@
     <nav class="top-links">
       <a class="navlink" href="#projeto">O projeto</a>
       <a class="navlink" href="#como">Como funciona</a>
+      <a class="navlink" href="#graus">Graus</a>
       <a class="navlink" href="#modelo">O modelo</a>
       <a class="navlink" href="#equipe">Equipe</a>
       <a class="btn btn-primary" href="teste.html">Iniciar teste</a>
@@ -233,6 +242,37 @@
         <h3>Classificação</h3>
         <p>O modelo devolve o Grau Geral (G0 a G3) com um score contínuo de 0 a 100 e sinaliza
         os casos próximos da fronteira entre dois graus.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="graus">
+  <div class="wrap">
+    <div class="kicker">Entenda o resultado</div>
+    <h2 class="sec-title">O que significam G0, G1, G2 e G3</h2>
+    <p class="sec-sub">O Grau Geral (GG) da escala GRBASI resume, em quatro níveis, o quanto a voz se
+    afasta do padrão saudável. É essa a escala que o VoxAI estima.</p>
+    <div class="graus-grid">
+      <div class="gcard" style="--gc:oklch(0.72 0.17 150)">
+        <span class="gtag">G0</span>
+        <b>Não-disfônico</b>
+        <p>Voz saudável, sem sinais de alteração.</p>
+      </div>
+      <div class="gcard" style="--gc:oklch(0.80 0.15 85)">
+        <span class="gtag">G1</span>
+        <b>Disfonia leve</b>
+        <p>Alteração discreta na qualidade da voz.</p>
+      </div>
+      <div class="gcard" style="--gc:oklch(0.70 0.17 55)">
+        <span class="gtag">G2</span>
+        <b>Disfonia moderada</b>
+        <p>Alteração perceptível na voz.</p>
+      </div>
+      <div class="gcard" style="--gc:oklch(0.62 0.22 27)">
+        <span class="gtag">G3</span>
+        <b>Disfonia intensa</b>
+        <p>Alteração acentuada (grave).</p>
       </div>
     </div>
   </div>
