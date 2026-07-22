@@ -145,7 +145,7 @@
       <div class="card center">
         <div class="eyebrow">Triagem vocal</div>
         <h1>Teste vocal em duas gravações</h1>
-        <p class="sub">Sem cadastro e sem instalação. A análise acontece na hora e nenhum dado é armazenado.</p>
+        <p class="sub">Sem cadastro e sem instalação. A análise acontece na hora e não guardamos a sua gravação de voz.</p>
         <div class="steps-intro">
           <div class="si"><div class="n">1</div><div><b>Vogal /a/ sustentada</b><span>Imite o som do “a” de “pá” e segure por uns 5 segundos, contínuo e estável.</span></div></div>
           <div class="si"><div class="n">2</div><div><b>Contagem de 1 a 10</b><span>Conte “um, dois, três…” até dez, em ritmo e volume naturais.</span></div></div>
@@ -171,7 +171,7 @@
         <div class="center">
           <div class="eyebrow">Antes de começar</div>
           <h2>Algumas perguntas rápidas</h2>
-          <p class="sub">Ajudam a interpretar o resultado. As respostas ficam só neste navegador: nada é enviado nem armazenado.</p>
+          <p class="sub" id="quest-sub">Ajudam a interpretar o resultado. As respostas ficam só neste navegador: nada é enviado nem armazenado.</p>
         </div>
         <div class="form">
           <div class="field">
@@ -200,6 +200,14 @@
               <label class="opt"><input type="radio" name="queixa" value="sim"><span>Sim</span></label>
               <label class="opt"><input type="radio" name="queixa" value="nao"><span>Não</span></label>
             </div>
+          </div>
+          <div class="field" id="coleta-field" style="display:none;">
+            <label class="q">Autoriza usar suas respostas, de forma anônima, para a pesquisa do projeto?</label>
+            <div class="opts">
+              <label class="opt"><input type="radio" name="coleta" value="sim"><span>Sim, autorizo</span></label>
+              <label class="opt"><input type="radio" name="coleta" value="nao"><span>Não</span></label>
+            </div>
+            <p class="disc" style="text-align:left;margin-top:8px;">Enviamos apenas idade, gênero, uso da voz, queixa e o grau estimado. Sem gravação de voz e sem identificação. Recusar não muda o teste.</p>
           </div>
         </div>
         <div class="row" style="margin-top:10px;justify-content:flex-end;">
@@ -281,6 +289,9 @@
 "use strict";
 const EXTRATOR = "https://theyzer-extrator-grbasi.hf.space";
 const GRBASI   = "https://theyzer-grbasi-api.hf.space";
+// URL /exec do Google Apps Script (deploy como web app) para coletar as respostas
+// do questionário. Vazio = não coleta nada (o consentimento nem aparece).
+const COLETA_URL = "https://script.google.com/macros/s/AKfycbx42hsmZlSDNhClyRJdaV7B494aHe4Ri1hXfcMKRQoFdiBVzOoOTwcD2HfRMTHMMlt47g/exec";
 
 // Aquece os servidores logo na abertura da pagina: os HF Spaces dormem quando
 // ociosos, e o tempo de leitura + gravacao costuma bastar para eles acordarem.
@@ -288,7 +299,7 @@ fetch(EXTRATOR + "/health").catch(function(){});
 fetch(GRBASI + "/health").catch(function(){});
 
 const RMS_MIN = 0.012;
-const SNR_MIN_DB = 20;   // abaixo disso pede regravação (microfone ruidoso). Suba/baixe conforme os testes reais.
+const SNR_MIN_DB = 15;   // abaixo disso pede regravação (microfone ruidoso). Suba/baixe conforme os testes reais.
 const TAREFAS = {
   vogal:    { key:"vogal",    titulo:"Vogal /a/ sustentada", instr:"Imite o som do “a” de “pá” e sustente por cerca de 5 segundos, sem variar o tom.", alvo:5, min:3, max:8,  voicedMin:0.35, proximo:"Continuar" },
   contagem: { key:"contagem", titulo:"Contagem de 1 a 10",   instr:"Conte em voz alta: “um, dois, três… ” até dez, em ritmo e volume naturais.", alvo:10, min:4, max:15, voicedMin:0.15, proximo:"Enviar para análise" },
@@ -544,6 +555,10 @@ function legendaHTML(destaque){
 }
 function initQuest(){
   const idade=$("q-idade"), warn=$("idade-warn"), cont=$("q-continue");
+  if(COLETA_URL){
+    $("coleta-field").style.display="";
+    $("quest-sub").textContent="Ajudam a interpretar o resultado. Suas respostas ficam neste navegador. Só enviamos algo se você autorizar abaixo.";
+  }
   let warnTimer=null;
   function foraFaixa(){
     const a=parseInt(idade.value,10);
@@ -575,6 +590,23 @@ function coletaPerfil(){
   const pick=n=>{const el=document.querySelector('input[name='+n+']:checked');return el?el.value:null;};
   perfil={ genero:pick("genero"), idade:Number.isFinite(a)?a:null, profissaoUsaVoz:pick("prof"), queixaVocal:pick("queixa") };
   perfil.foraFaixa = perfil.idade!=null && (perfil.idade<19||perfil.idade>65);
+  perfil.consente = (pick("coleta")==="sim");
+}
+// Envio opt-in para a Planilha (Apps Script). "no-cors" evita o preflight que o
+// Apps Script não trata; é fire-and-forget (não lemos a resposta).
+function enviarColeta(res){
+  if(!COLETA_URL || !perfil || !perfil.consente) return;
+  try{
+    const payload={
+      genero:perfil.genero, idade:perfil.idade,
+      profissaoUsaVoz:perfil.profissaoUsaVoz, queixaVocal:perfil.queixaVocal,
+      foraFaixa:!!perfil.foraFaixa,
+      score_GG:(res&&res.score_GG!=null)?res.score_GG:null,
+      grau:(res&&res.grau!=null)?res.grau:null,
+      grau_rotulo:(res&&res.grau_rotulo)||""
+    };
+    fetch(COLETA_URL,{method:"POST",mode:"no-cors",body:JSON.stringify(payload)}).catch(()=>{});
+  }catch(e){}
 }
 // Ruído do ambiente: mede a energia do microfone por alguns instantes com o usuário
 // em silêncio (mediana do RMS). Vira a referência do SNR — assim um som contínuo
@@ -656,6 +688,7 @@ async function run(){
     const feats = await extrair(vogal, contagem);
     const res = await classificar(feats);
     showResult(res, feats);
+    enviarColeta(res);
   }catch(e){
     $("err-msg").textContent = e && e.message ? e.message : "Erro inesperado.";
     show("error");
