@@ -752,6 +752,7 @@ function demoVogal(){
   pararDemo();
   try{
     const AC=window.AudioContext||window.webkitAudioContext; demoCtx=new AC();
+    if(demoCtx.state==="suspended" && demoCtx.resume) demoCtx.resume();  // iOS: precisa de resume no toque
     const t0=demoCtx.currentTime, dur=3;
     const osc=demoCtx.createOscillator(); osc.type="sawtooth"; osc.frequency.value=130;
     const f1=demoCtx.createBiquadFilter(); f1.type="bandpass"; f1.frequency.value=800; f1.Q.value=6;
