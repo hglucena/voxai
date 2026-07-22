@@ -282,9 +282,10 @@
             <span><i style="background:var(--g3)"></i>fora do esperado</span>
           </div>
           <div class="cmp" id="r-compare"></div>
-          <p class="cmp-src">Referências: Feliciano et al. (2026) e Lopes &amp; Abreu (2024), extraídas com o VoxMore. As medidas aqui saem da vogal + contagem, então a comparação é aproximada.</p>
+          <p class="cmp-src">Referências: Feliciano et al. (2026) e Lopes &amp; Abreu (2024), extraídas com o VoxMore. As medidas aqui saem da vogal + contagem, então a comparação é aproximada. As faixas de f0 (por sexo) usam valores gerais da literatura, não específicos do português brasileiro.</p>
           <div class="cmp-sep">Sem valor de referência clínica</div>
           <div class="measures" id="r-measures"></div>
+          <p class="cmp-src">O jitter absoluto é a mesma medida do jitter local, em µs. As demais ainda não têm valor de referência publicado nesses estudos.</p>
           <p class="disc" id="r-imp" style="text-align:left;"></p>
         </details>
         <div class="row" style="margin-top:24px;">
@@ -361,44 +362,69 @@ const NORMATIVOS = {
 };
 function fmtNum(v){ return Math.abs(v) >= 100 ? String(Math.round(v)) : Number(v).toFixed(2); }
 
-// Desenha as barras de comparação (as 12 com corte) + as medidas sem referência.
+// Desenha a comparação: cortes clínicos (faixa normal de um lado) + faixas de f0
+// por sexo (normal no meio) + as medidas sem referência.
 function renderComparacao(feats, res){
   const imp = new Set((res && res.imputadas) || []);
   const pct = x => Math.max(0, Math.min(100, x * 100));
   const mix = (cor, p) => "color-mix(in oklab, " + cor + " " + p + "%, white)";
+  const corDe = ok => ok == null ? "var(--mut)" : (ok ? "var(--g0)" : "var(--g3)");
+  const pill = ok => ok == null
+    ? '<span class="cmp-pill" style="background:var(--soft);color:var(--mut)">sem dado</span>'
+    : ok
+      ? '<span class="cmp-pill" style="background:' + mix("var(--g0)", 16) + ';color:var(--g0)">Normal</span>'
+      : '<span class="cmp-pill" style="background:' + mix("var(--g3)", 14) + ';color:var(--g3)">Fora do esperado</span>';
+  const zona = (w, cor, p) => '<span class="cmp-z" style="width:' + pct(w) + '%;background:' + mix(cor, p) + '"></span>';
+  const row = (label, ok, zonas, pos, tem, valTxt, refTxt) => {
+    const cor = corDe(ok);
+    const marca = tem ? '<span class="cmp-mark" style="left:' + pct(pos) + '%;background:' + cor + '"></span>' : "";
+    return '<div class="cmp-row"><div class="cmp-head"><span class="cmp-name">' + label + '</span>' + pill(ok) + '</div>'
+      + '<div class="cmp-track">' + zonas + marca + '</div>'
+      + '<div class="cmp-ref"><b style="color:' + cor + '">' + valTxt + '</b> · ' + refTxt + '</div></div>';
+  };
+
+  // Faixas de f0 por sexo — valores gerais da literatura (NÃO corte de distúrbio do PB),
+  // usando o gênero do questionário só localmente (nunca é enviado).
+  const g = perfil && perfil.genero;
+  const f0r = g === "Feminino" ? { lo: 150, hi: 250, min: 100, max: 300 }
+            : g === "Masculino" ? { lo: 80, hi: 150, min: 50, max: 200 } : null;
+  const RANGE = {};
+  if (f0r) { RANGE.f0media = f0r; RANGE.f0q1 = f0r; }
+
   let bars = "";
+  // 1) medidas com corte clínico (faixa normal de um lado só)
   MEDIDAS_20.forEach(([k, label, un]) => {
     const n = NORMATIVOS[k]; if (!n) return;
-    const v = feats[k];
-    const tem = (v != null && !isNaN(v));
+    const v = feats[k]; const tem = (v != null && !isNaN(v));
     const cpos = (n.cut - n.min) / (n.max - n.min);
     const ok = tem ? (n.dir === "low" ? v <= n.cut : v >= n.cut) : null;
-    const cor = ok == null ? "var(--mut)" : (ok ? "var(--g0)" : "var(--g3)");
-    const zOk = '<span class="cmp-z" style="width:' + pct(n.dir === "low" ? cpos : 1 - cpos) + '%;background:' + mix("var(--g0)", 30) + '"></span>';
-    const zBad = '<span class="cmp-z" style="width:' + pct(n.dir === "low" ? 1 - cpos : cpos) + '%;background:' + mix("var(--g3)", 22) + '"></span>';
-    const zonas = n.dir === "low" ? zOk + zBad : zBad + zOk;
-    const marca = tem ? '<span class="cmp-mark" style="left:' + pct((v - n.min) / (n.max - n.min)) + '%;background:' + cor + '"></span>' : "";
-    const pill = ok == null
-      ? '<span class="cmp-pill" style="background:var(--soft);color:var(--mut)">sem dado</span>'
-      : ok
-        ? '<span class="cmp-pill" style="background:' + mix("var(--g0)", 16) + ';color:var(--g0)">Normal</span>'
-        : '<span class="cmp-pill" style="background:' + mix("var(--g3)", 14) + ';color:var(--g3)">Fora do esperado</span>';
+    const zOk = zona(n.dir === "low" ? cpos : 1 - cpos, "var(--g0)", 30);
+    const zBad = zona(n.dir === "low" ? 1 - cpos : cpos, "var(--g3)", 22);
     const valTxt = tem ? (fmtNum(v) + (un ? " " + un : "")) : "—";
     const refTxt = "referência (normal): " + (n.dir === "low" ? "≤ " : "> ") + n.cut + (un ? " " + un : "");
-    bars += '<div class="cmp-row">'
-      + '<div class="cmp-head"><span class="cmp-name">' + label + '</span>' + pill + '</div>'
-      + '<div class="cmp-track">' + zonas + marca + '</div>'
-      + '<div class="cmp-ref"><b style="color:' + cor + '">' + valTxt + '</b> · ' + refTxt + '</div>'
-      + '</div>';
+    bars += row(label, ok, n.dir === "low" ? zOk + zBad : zBad + zOk, (v - n.min) / (n.max - n.min), tem, valTxt, refTxt);
   });
+  // 2) f0 por sexo (faixa esperada dos dois lados: vermelho–verde–vermelho)
+  MEDIDAS_20.forEach(([k, label, un]) => {
+    const r = RANGE[k]; if (!r) return;
+    const v = feats[k]; const tem = (v != null && !isNaN(v));
+    const lo = (r.lo - r.min) / (r.max - r.min), hi = (r.hi - r.min) / (r.max - r.min);
+    const ok = tem ? (v >= r.lo && v <= r.hi) : null;
+    const zonas = zona(lo, "var(--g3)", 22) + zona(hi - lo, "var(--g0)", 30) + zona(1 - hi, "var(--g3)", 22);
+    const valTxt = tem ? (fmtNum(v) + (un ? " " + un : "")) : "—";
+    const refTxt = "faixa esperada (" + g + "): " + r.lo + "–" + r.hi + (un ? " " + un : "");
+    bars += row(label, ok, zonas, (v - r.min) / (r.max - r.min), tem, valTxt, refTxt);
+  });
+  $("r-compare").innerHTML = bars;
+
+  // medidas sem referência (exclui as com corte e as de faixa de f0)
   let cards = "";
   MEDIDAS_20.forEach(([k, label, un, fmt]) => {
-    if (NORMATIVOS[k]) return;
+    if (NORMATIVOS[k] || RANGE[k]) return;
     const v = feats[k];
     const val = (v == null || isNaN(v)) ? "—" : (fmt ? fmt(v) : fmtNum(v));
     cards += '<div class="meas' + (imp.has(k) ? " imp" : "") + '"><b>' + val + (un && val !== "—" ? ' <span style="font-size:11px;color:var(--mut)">' + un + '</span>' : "") + '</b><span>' + label + (imp.has(k) ? " · estimada" : "") + '</span></div>';
   });
-  $("r-compare").innerHTML = bars;
   $("r-measures").innerHTML = cards;
   $("r-imp").textContent = imp.size ? ('Medidas "estimadas" não puderam ser calculadas do seu áudio e foram preenchidas pela mediana do conjunto de treino (' + imp.size + " de 20).") : "";
 }
