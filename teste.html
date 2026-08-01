@@ -162,7 +162,7 @@
         <h1>Teste vocal em duas gravações</h1>
         <p class="sub">Sem cadastro e sem instalação. A análise acontece na hora e não guardamos a sua gravação de voz.</p>
         <div class="steps-intro">
-          <div class="si"><div class="n">1</div><div><b>Vogal /a/ sustentada</b><span>Imite o som do “a” de “pá” e segure por uns 5 segundos, contínuo e estável.</span></div></div>
+          <div class="si"><div class="n">1</div><div><b>Vogal /a/ sustentada</b><span>Faça um “ahhhhhhhh” bem longo, por uns 5 segundos, tentando não variar o tom.</span></div></div>
           <div class="si"><div class="n">2</div><div><b>Contagem de 1 a 10</b><span>Conte “um, dois, três…” até dez, em ritmo e volume naturais.</span></div></div>
           <div class="si"><div class="n">3</div><div><b>Resultado</b><span>O VoxAI estima o grau geral de disfonia (G0–G3) a partir da sua voz.</span></div></div>
         </div>
@@ -192,8 +192,11 @@
           <div class="field">
             <label class="q">Gênero</label>
             <div class="opts">
-              <label class="opt"><input type="radio" name="genero" value="Feminino"><span>Feminino</span></label>
-              <label class="opt"><input type="radio" name="genero" value="Masculino"><span>Masculino</span></label>
+              <label class="opt"><input type="radio" name="genero" value="Mulher cis"><span>Mulher cis</span></label>
+              <label class="opt"><input type="radio" name="genero" value="Homem cis"><span>Homem cis</span></label>
+              <label class="opt"><input type="radio" name="genero" value="Mulher trans"><span>Mulher trans</span></label>
+              <label class="opt"><input type="radio" name="genero" value="Homem trans"><span>Homem trans</span></label>
+              <label class="opt"><input type="radio" name="genero" value="Não-binário"><span>Não-binário</span></label>
               <label class="opt"><input type="radio" name="genero" value="Outro"><span>Outro</span></label>
             </div>
           </div>
@@ -216,13 +219,27 @@
               <label class="opt"><input type="radio" name="queixa" value="nao"><span>Não</span></label>
             </div>
           </div>
+          <div class="field">
+            <label class="q">Sinto que tenho que fazer força para a minha voz sair?</label>
+            <div class="opts">
+              <label class="opt"><input type="radio" name="esforco" value="sim"><span>Sim</span></label>
+              <label class="opt"><input type="radio" name="esforco" value="nao"><span>Não</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <label class="q">Minha voz é rouca?</label>
+            <div class="opts">
+              <label class="opt"><input type="radio" name="rouquidao" value="sim"><span>Sim</span></label>
+              <label class="opt"><input type="radio" name="rouquidao" value="nao"><span>Não</span></label>
+            </div>
+          </div>
           <div class="field" id="coleta-field" style="display:none;">
             <label class="q">Autoriza usar suas respostas, de forma anônima, para a pesquisa do projeto?</label>
             <div class="opts">
               <label class="opt"><input type="radio" name="coleta" value="sim"><span>Sim, autorizo</span></label>
               <label class="opt"><input type="radio" name="coleta" value="nao"><span>Não</span></label>
             </div>
-            <p class="disc" style="text-align:left;margin-top:8px;">Enviamos apenas idade, gênero, uso da voz, queixa e o grau estimado. Sem gravação de voz e sem identificação. Recusar não muda o teste.</p>
+            <p class="disc" style="text-align:left;margin-top:8px;">Não guardamos sua gravação nem nada que identifique você. Recusar não muda o teste.</p>
           </div>
         </div>
         <div class="row" style="margin-top:10px;justify-content:flex-end;">
@@ -253,7 +270,7 @@
         <h2>Analisando sua voz…</h2>
         <ul class="an-steps">
           <li id="st-extraindo"><span class="dot"></span> Enviando o áudio e extraindo as medidas da voz</li>
-          <li id="st-classificando"><span class="dot"></span> Classificando o grau vocal (G0–G3)</li>
+          <li id="st-classificando"><span class="dot"></span> Classificando o grau de desvio vocal</li>
         </ul>
         <p class="hint" id="an-hint"></p>
       </div>
@@ -325,7 +342,7 @@ fetch(GRBASI + "/health").catch(function(){});
 const RMS_MIN = 0.012;
 const SNR_MIN_DB = 15;   // abaixo disso pede regravação (microfone ruidoso). Suba/baixe conforme os testes reais.
 const TAREFAS = {
-  vogal:    { key:"vogal",    titulo:"Vogal /a/ sustentada", instr:"Imite o som do “a” de “pá” e sustente por cerca de 5 segundos, sem variar o tom.", alvo:5, min:3, max:8,  voicedMin:0.35, proximo:"Continuar" },
+  vogal:    { key:"vogal",    titulo:"Vogal /a/ sustentada", instr:"Faça um “ahhhhhhhh” bem longo, prolongando por 5 segundos, tentando não variar o tom da voz.", alvo:5, min:3, max:8,  voicedMin:0.35, proximo:"Continuar" },
   contagem: { key:"contagem", titulo:"Contagem de 1 a 10",   instr:"Conte em voz alta: “um, dois, três… ” até dez, em ritmo e volume naturais.", alvo:10, min:4, max:15, voicedMin:0.15, proximo:"Enviar para análise" },
 };
 const GRAUS = {
@@ -372,7 +389,7 @@ function renderComparacao(feats, res){
   const pill = ok => ok == null
     ? '<span class="cmp-pill" style="background:var(--soft);color:var(--mut)">sem dado</span>'
     : ok
-      ? '<span class="cmp-pill" style="background:' + mix("var(--g0)", 16) + ';color:var(--g0)">Normal</span>'
+      ? '<span class="cmp-pill" style="background:' + mix("var(--g0)", 16) + ';color:var(--g0)">Dentro do esperado</span>'
       : '<span class="cmp-pill" style="background:' + mix("var(--g3)", 14) + ';color:var(--g3)">Fora do esperado</span>';
   const zona = (w, cor, p) => '<span class="cmp-z" style="width:' + pct(w) + '%;background:' + mix(cor, p) + '"></span>';
   const row = (label, ok, zonas, pos, tem, valTxt, refTxt) => {
@@ -384,10 +401,12 @@ function renderComparacao(feats, res){
   };
 
   // Faixas de f0 por sexo — valores gerais da literatura (NÃO corte de distúrbio do PB),
-  // usando o gênero do questionário só localmente (nunca é enviado).
+  // usando o gênero do questionário só localmente (nunca é enviado). Só mulher cis/homem
+  // cis entram: a voz de pessoas trans/não-binárias varia demais (hormonização, treino
+  // vocal, tempo de transição) pra presumir uma faixa a partir da identidade de gênero.
   const g = perfil && perfil.genero;
-  const f0r = g === "Feminino" ? { lo: 150, hi: 250, min: 100, max: 300 }
-            : g === "Masculino" ? { lo: 80, hi: 150, min: 50, max: 200 } : null;
+  const f0r = g === "Mulher cis" ? { lo: 150, hi: 250, min: 100, max: 300 }
+            : g === "Homem cis" ? { lo: 80, hi: 150, min: 50, max: 200 } : null;
   const RANGE = {};
   if (f0r) { RANGE.f0media = f0r; RANGE.f0q1 = f0r; }
 
@@ -495,15 +514,14 @@ function recordTask(cfg){
     const body=$("rec-body");
 
     function idle(){
+      // Sem "ouvir exemplo" em nenhuma etapa: tocar uma voz de referência antes do
+      // participante gravar arrisca ele mimetizar o tom/ritmo ouvido, contaminando a medida.
       body.innerHTML =
         '<h2>'+cfg.titulo+'</h2><p class="sub">'+cfg.instr+'</p>'+barsHTML()+
-        '<div class="row" style="margin-top:14px;"><button id="demo" class="btn btn-ghost" type="button">Ouvir exemplo</button><button id="go" class="btn btn-primary">Iniciar gravação</button></div>'+
-        '<p class="disc" id="demo-hint" style="margin-top:10px;">Ouça um exemplo de como '+(cfg.key==="vogal"?"sustentar o /a/":"fazer a contagem")+'.</p>';
-      $("demo").addEventListener("click", ()=>{ cfg.key==="vogal"?demoVogal():demoContagem(); });
+        '<div class="row" style="margin-top:14px;"><button id="go" class="btn btn-primary">Iniciar gravação</button></div>';
       $("go").addEventListener("click", iniciar, {once:true});
     }
     async function iniciar(){
-      pararDemo();
       // Liga o motor de áudio JÁ no toque: o iOS exige que o AudioContext seja
       // criado/retomado dentro do gesto do usuário, senão a gravação sai muda.
       try{
@@ -524,7 +542,7 @@ function recordTask(cfg){
       recording(micStream);
     }
     async function countdown(){
-      for(let n=3;n>=1;n--){ body.innerHTML='<div class="count">'+n+'</div><p class="sub">Prepare-se… '+(cfg.key==="vogal"?"sustente o /a/":"comece a contar")+'</p>'; await sleep(800); }
+      for(let n=3;n>=1;n--){ body.innerHTML='<div class="count">'+n+'</div><p class="sub">Prepare-se… '+(cfg.key==="vogal"?"e faça o ahhhhhhhhh":"comece a contar")+'</p>'; await sleep(800); }
     }
     function recording(micStream){
       body.innerHTML =
@@ -672,9 +690,11 @@ function initQuest(){
     const g=document.querySelector('input[name=genero]:checked');
     const p=document.querySelector('input[name=prof]:checked');
     const q=document.querySelector('input[name=queixa]:checked');
+    const ef=document.querySelector('input[name=esforco]:checked');
+    const r=document.querySelector('input[name=rouquidao]:checked');
     const a=parseInt(idade.value,10);
     const idadeOk=Number.isFinite(a)&&a>=1&&a<=120;
-    cont.disabled=!(g&&p&&q&&idadeOk);
+    cont.disabled=!(g&&p&&q&&ef&&r&&idadeOk);
   }
   // O aviso de idade espera o usuário parar de digitar (ou sair do campo);
   // o botão Continuar reage na hora.
@@ -692,7 +712,7 @@ function initQuest(){
 function coletaPerfil(){
   const a=parseInt($("q-idade").value,10);
   const pick=n=>{const el=document.querySelector('input[name='+n+']:checked');return el?el.value:null;};
-  perfil={ genero:pick("genero"), idade:Number.isFinite(a)?a:null, profissaoUsaVoz:pick("prof"), queixaVocal:pick("queixa") };
+  perfil={ genero:pick("genero"), idade:Number.isFinite(a)?a:null, profissaoUsaVoz:pick("prof"), queixaVocal:pick("queixa"), esforcoVocal:pick("esforco"), rouquidao:pick("rouquidao") };
   perfil.foraFaixa = perfil.idade!=null && (perfil.idade<19||perfil.idade>65);
   perfil.consente = (pick("coleta")==="sim");
 }
@@ -704,6 +724,7 @@ function enviarColeta(res){
     const payload={
       genero:perfil.genero, idade:perfil.idade,
       profissaoUsaVoz:perfil.profissaoUsaVoz, queixaVocal:perfil.queixaVocal,
+      esforcoVocal:perfil.esforcoVocal, rouquidao:perfil.rouquidao,
       foraFaixa:!!perfil.foraFaixa,
       score_GG:(res&&res.score_GG!=null)?res.score_GG:null,
       grau:(res&&res.grau!=null)?res.grau:null,
@@ -742,38 +763,6 @@ function nivelSinal(vals){
   let sum=0,n=0; for(let i=Math.floor(s.length*0.5);i<s.length;i++){sum+=s[i];n++;}
   return n ? sum/n : s[s.length-1];
 }
-// Tutorial em áudio (100% no navegador): tom "robótico" p/ a vogal; voz do sistema p/ a contagem.
-let demoCtx=null;
-function pararDemo(){
-  try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){}
-  if(demoCtx){ try{demoCtx.close();}catch(e){} demoCtx=null; }
-}
-function demoVogal(){
-  pararDemo();
-  try{
-    const AC=window.AudioContext||window.webkitAudioContext; demoCtx=new AC();
-    if(demoCtx.state==="suspended" && demoCtx.resume) demoCtx.resume();  // iOS: precisa de resume no toque
-    const t0=demoCtx.currentTime, dur=3;
-    const osc=demoCtx.createOscillator(); osc.type="sawtooth"; osc.frequency.value=130;
-    const f1=demoCtx.createBiquadFilter(); f1.type="bandpass"; f1.frequency.value=800; f1.Q.value=6;
-    const f2=demoCtx.createBiquadFilter(); f2.type="bandpass"; f2.frequency.value=1200; f2.Q.value=9;
-    const g=demoCtx.createGain();
-    g.gain.setValueAtTime(0,t0); g.gain.linearRampToValueAtTime(0.16,t0+0.15);
-    g.gain.setValueAtTime(0.16,t0+dur-0.25); g.gain.linearRampToValueAtTime(0,t0+dur);
-    osc.connect(f1); f1.connect(g); osc.connect(f2); f2.connect(g); g.connect(demoCtx.destination);
-    osc.start(t0); osc.stop(t0+dur); osc.onended=pararDemo;
-  }catch(e){ pararDemo(); }
-}
-function demoContagem(){
-  pararDemo();
-  if(!window.speechSynthesis) return;
-  const u=new SpeechSynthesisUtterance("um, dois, três, quatro, cinco, seis, sete, oito, nove, dez.");
-  u.lang="pt-BR"; u.rate=0.85; u.pitch=0.7;
-  const vs=speechSynthesis.getVoices().filter(v=>/pt/i.test(v.lang||""));
-  if(vs.length) u.voice=vs[0];
-  speechSynthesis.speak(u);
-}
-
 // ---------- orquestração ----------
 async function run(){
   $("intro-legend").innerHTML = legendaHTML();
@@ -783,7 +772,6 @@ async function run(){
   show("quest");
   await clickOnce($("q-continue"));
   coletaPerfil();
-  pararDemo();
   $("chip-vogal").className="taskchip"; $("chip-contagem").className="taskchip";
   show("rec");
   const vogal = await recordTask(TAREFAS.vogal);
