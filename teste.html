@@ -234,12 +234,12 @@
             </div>
           </div>
           <div class="field" id="coleta-field" style="display:none;">
-            <label class="q">Autoriza usar suas respostas, de forma anônima, para a pesquisa do projeto?</label>
+            <label class="q">Autoriza guardar suas respostas e sua gravação para a pesquisa do projeto?</label>
             <div class="opts">
               <label class="opt"><input type="radio" name="coleta" value="sim"><span>Sim, autorizo</span></label>
               <label class="opt"><input type="radio" name="coleta" value="nao"><span>Não</span></label>
             </div>
-            <p class="disc" style="text-align:left;margin-top:8px;">Não guardamos sua gravação nem nada que identifique você. Recusar não muda o teste.</p>
+            <p class="disc" style="text-align:left;margin-top:8px;">Se autorizar, guardamos as respostas acima, as medidas da sua voz, o resultado e a gravação que você fez. Não pedimos nem registramos nome, e-mail ou qualquer coisa que identifique você. Recusar não muda o teste.</p>
           </div>
         </div>
         <div class="row" style="margin-top:10px;justify-content:flex-end;">
@@ -338,6 +338,16 @@ const COLETA_URL = "https://script.google.com/macros/s/AKfycbx42hsmZlSDNhClyRJda
 // ociosos, e o tempo de leitura + gravacao costuma bastar para eles acordarem.
 fetch(EXTRATOR + "/health").catch(function(){});
 fetch(GRBASI + "/health").catch(function(){});
+
+// ID aleatório do teste: liga a linha da planilha ao arquivo de áudio no Drive.
+// Não deriva de nada da pessoa — é sorteado a cada teste.
+const SESSAO_ID = (function(){
+  try{
+    if(crypto.randomUUID) return crypto.randomUUID().replace(/-/g,"");
+    const b=new Uint8Array(16); crypto.getRandomValues(b);
+    return Array.from(b,x=>x.toString(16).padStart(2,"0")).join("");
+  }catch(e){ return "s"+Date.now().toString(36)+Math.random().toString(36).slice(2,10); }
+})();
 
 const RMS_MIN = 0.012;
 const SNR_MIN_DB = 15;   // abaixo disso pede regravação (microfone ruidoso). Suba/baixe conforme os testes reais.
@@ -615,12 +625,16 @@ async function extrair(vogal, contagem){
   const fd=new FormData();
   fd.append("vogal", new File([vogal],"vogal.wav",{type:"audio/wav"}));
   fd.append("contagem", new File([contagem],"contagem.wav",{type:"audio/wav"}));
+  // Só pedimos o áudio de volta quando a pessoa autorizou guardá-lo.
+  const querAudio = !!(perfil && perfil.consente);
+  if(querAudio) fd.append("incluir_audio","true");
   let r;
   try{ r=await fetchTimeout(EXTRATOR+"/extrair",{method:"POST",body:fd},150000); }
   catch(e){ throw new Error("Não consegui falar com o servidor de extração (ele pode estar iniciando). Tente novamente em alguns instantes."); }
   finally{ clearTimeout(coldTimer); }
   if(!r.ok){ let m="Falha na extração das medidas (HTTP "+r.status+")."; try{const j=await r.json(); if(j.erro)m=j.erro;}catch(e){} throw new Error(m); }
   const j=await r.json();
+  audioTarefaB64 = querAudio ? (j.audio_wav_b64 || null) : null;
   return j.linha_classificar || j.features || {};
 }
 async function classificar(feats){
@@ -667,6 +681,8 @@ const LEGENDA = [
   [3,"Disfonia intensa","alteração acentuada (grave)"],
 ];
 let perfil = {};
+// Áudio da tarefa (vogal + contagem) devolvido pelo extrator, só quando há consentimento.
+let audioTarefaB64 = null;
 function legendaHTML(destaque){
   return LEGENDA.map(([g,nome,desc])=>{
     const cor=GRAUS[g].cor, on=(destaque===g);
@@ -717,18 +733,23 @@ function coletaPerfil(){
   perfil.consente = (pick("coleta")==="sim");
 }
 // Envio opt-in para a Planilha (Apps Script). "no-cors" evita o preflight que o
-// Apps Script não trata; é fire-and-forget (não lemos a resposta).
-function enviarColeta(res){
+// Apps Script não trata; é fire-and-forget (não lemos a resposta). Vai o questionário,
+// as 20 medidas, o grau e o áudio da tarefa — ligados pelo SESSAO_ID, que também vira
+// o nome do arquivo no Drive. Nada aqui identifica a pessoa.
+function enviarColeta(res, feats){
   if(!COLETA_URL || !perfil || !perfil.consente) return;
   try{
     const payload={
+      id:SESSAO_ID,
       genero:perfil.genero, idade:perfil.idade,
       profissaoUsaVoz:perfil.profissaoUsaVoz, queixaVocal:perfil.queixaVocal,
       esforcoVocal:perfil.esforcoVocal, rouquidao:perfil.rouquidao,
       foraFaixa:!!perfil.foraFaixa,
       score_GG:(res&&res.score_GG!=null)?res.score_GG:null,
       grau:(res&&res.grau!=null)?res.grau:null,
-      grau_rotulo:(res&&res.grau_rotulo)||""
+      grau_rotulo:(res&&res.grau_rotulo)||"",
+      features:feats||null,
+      audio_wav_b64:audioTarefaB64||null
     };
     fetch(COLETA_URL,{method:"POST",mode:"no-cors",body:JSON.stringify(payload)}).catch(()=>{});
   }catch(e){}
@@ -781,7 +802,7 @@ async function run(){
     const feats = await extrair(vogal, contagem);
     const res = await classificar(feats);
     showResult(res, feats);
-    enviarColeta(res);
+    enviarColeta(res, feats);
   }catch(e){
     $("err-msg").textContent = e && e.message ? e.message : "Erro inesperado.";
     show("error");
