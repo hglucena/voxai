@@ -15,6 +15,9 @@
 
 // Deixe vazio para usar a planilha à qual este script está vinculado.
 var PLANILHA_ID = "";
+// A aba precisa estar vazia (ou não existir) na primeira execução: o cabeçalho mudou
+// e ganhou as 20 medidas + áudio. Se houver uma aba antiga com outro formato, apague-a
+// antes — o script para com erro em vez de gravar linhas desalinhadas.
 var ABA = "respostas";
 // Pasta do Drive onde os áudios são gravados (criada na primeira vez, se não existir).
 var PASTA_AUDIOS = "VoxAI - audios";
@@ -70,7 +73,11 @@ function doGet() {
   return json_({ ok: true, servico: "voxai-coleta" });
 }
 
-/** Aba de respostas, criando o cabeçalho na primeira vez. */
+/**
+ * Aba de respostas, criando o cabeçalho na primeira vez.
+ * Se a aba já existir com outro cabeçalho, para com erro em vez de anexar linhas
+ * desalinhadas (foi o que aconteceria ao reaproveitar a aba antiga).
+ */
 function pegaAba_() {
   var ss = PLANILHA_ID ? SpreadsheetApp.openById(PLANILHA_ID)
                        : SpreadsheetApp.getActiveSpreadsheet();
@@ -78,6 +85,12 @@ function pegaAba_() {
   if (aba.getLastRow() === 0) {
     aba.appendRow(COLUNAS);
     aba.setFrozenRows(1);
+    return aba;
+  }
+  var atual = aba.getRange(1, 1, 1, aba.getLastColumn()).getValues()[0];
+  if (atual.join("|") !== COLUNAS.join("|")) {
+    throw new Error("A aba '" + ABA + "' tem um cabecalho diferente do esperado. "
+                  + "Renomeie-a ou troque a constante ABA, para nao misturar formatos.");
   }
   return aba;
 }
