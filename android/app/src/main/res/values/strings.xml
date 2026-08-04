@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VoxAI</string>
+    <string name="mic_negado">Sem acesso ao microfone o teste não roda. Libere o microfone nas configurações do app.</string>
+    <string name="link_sem_app">Nenhum aplicativo instalado abre esse link.</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="branco">#FFFFFFFF</color>
+    <!-- Fundo do ícone adaptativo. A marca é colorida e vive melhor sobre branco. -->
+    <color name="ic_launcher_fundo">#FFFFFFFF</color>
+</resources>

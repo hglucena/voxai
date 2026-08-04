@@ -1,0 +1,56 @@
+plugins {
+    id "com.android.application"
+}
+
+// A chave de assinatura chega por variável de ambiente (GitHub Actions, secrets do
+// repositório). Sem ela o Gradle ainda compila, mas gera um APK sem assinatura, que
+// serve só para inspeção — o Android não instala.
+def keystorePath = System.getenv("VOXAI_KEYSTORE")
+def keystorePass = System.getenv("VOXAI_KEYSTORE_PASS")
+def temAssinatura = keystorePath != null && !keystorePath.isEmpty() && file(keystorePath).exists()
+
+android {
+    namespace "br.ufpb.voxai"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "br.ufpb.voxai"
+        minSdk 24
+        targetSdk 35
+        // O número da execução do workflow vira o versionCode, então cada build
+        // publicado é sempre maior que o anterior.
+        versionCode (System.getenv("VOXAI_VERSION_CODE") ?: "1").toInteger()
+        versionName "1.0." + (System.getenv("VOXAI_VERSION_CODE") ?: "0")
+    }
+
+    if (temAssinatura) {
+        signingConfigs {
+            release {
+                storeFile file(keystorePath)
+                storeType "PKCS12"
+                storePassword keystorePass
+                keyAlias "voxai"
+                keyPassword keystorePass
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            if (temAssinatura) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:1.7.0"
+}

@@ -1,0 +1,76 @@
+name: APK do VoxAI
+
+# Compila o app Android e publica o APK assinado como release. O link fixo
+# https://github.com/hglucena/voxai/releases/latest/download/voxai.apk sempre
+# aponta para a última build, então o botão do site nunca precisa mudar.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/apk.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.13"
+
+      - name: Restaura a chave de assinatura
+        env:
+          KEYSTORE_B64: ${{ secrets.VOXAI_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::Falta o secret VOXAI_KEYSTORE_B64. Sem ele o APK sai sem assinatura e o Android nao instala."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/voxai.p12"
+
+      - name: Compila o release
+        working-directory: android
+        env:
+          VOXAI_KEYSTORE: ${{ runner.temp }}/voxai.p12
+          VOXAI_KEYSTORE_PASS: ${{ secrets.VOXAI_KEYSTORE_PASS }}
+          VOXAI_VERSION_CODE: ${{ github.run_number }}
+        run: gradle --no-daemon assembleRelease
+
+      - name: Confere a assinatura
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk voxai.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs voxai.apk
+          ls -lh voxai.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voxai-apk
+          path: voxai.apk
+
+      - name: Publica o release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: VoxAI 1.0.${{ github.run_number }}
+          make_latest: true
+          body: |
+            APK do VoxAI para Android 7.0 ou mais novo.
+
+            Instalação e requisitos: https://hglucena.github.io/voxai/#app
+          files: voxai.apk
