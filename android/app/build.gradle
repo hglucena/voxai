@@ -8,6 +8,7 @@ plugins {
 def keystorePath = System.getenv("VOXAI_KEYSTORE")
 def keystorePass = System.getenv("VOXAI_KEYSTORE_PASS")
 def temAssinatura = keystorePath != null && !keystorePath.isEmpty() && file(keystorePath).exists()
+def versao = System.getenv("VOXAI_VERSION_CODE") ?: "1"
 
 android {
     namespace "br.ufpb.voxai"
@@ -19,8 +20,8 @@ android {
         targetSdk 35
         // O número da execução do workflow vira o versionCode, então cada build
         // publicado é sempre maior que o anterior.
-        versionCode (System.getenv("VOXAI_VERSION_CODE") ?: "1").toInteger()
-        versionName "1.0." + (System.getenv("VOXAI_VERSION_CODE") ?: "0")
+        versionCode = versao.toInteger()
+        versionName = "1.0." + versao
     }
 
     if (temAssinatura) {
