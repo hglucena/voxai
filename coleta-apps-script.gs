@@ -74,6 +74,19 @@ function doGet() {
 }
 
 /**
+ * Rode esta função UMA VEZ no editor (botão Executar) depois de colar o código.
+ * Ela dispara o pedido de autorização do Drive — que o deploy sozinho não faz — e
+ * confirma no log que dá para criar a pasta e gravar arquivo. Apaga o que criou.
+ */
+function autorizar() {
+  var pasta = pegaPasta_(PASTA_AUDIOS);
+  var arq = pasta.createFile(Utilities.newBlob("teste", "text/plain", "_teste_permissao.txt"));
+  arq.setTrashed(true);
+  Logger.log("Drive OK — pasta '%s' pronta em %s", pasta.getName(), pasta.getUrl());
+  Logger.log("Planilha OK — aba '%s'", pegaAba_().getName());
+}
+
+/**
  * Aba de respostas, criando o cabeçalho na primeira vez.
  * Se a aba já existir com outro cabeçalho, para com erro em vez de anexar linhas
  * desalinhadas (foi o que aconteceria ao reaproveitar a aba antiga).
