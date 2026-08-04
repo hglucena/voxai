@@ -53,5 +53,9 @@ android {
 }
 
 dependencies {
+    // O appcompat arrasta kotlin-stdlib 1.8 e, por tabela, os módulos antigos
+    // kotlin-stdlib-jdk7/jdk8 1.6, cujas classes colidem com as do stdlib novo.
+    // O BOM alinha todos na mesma versão e a colisão some.
+    implementation platform("org.jetbrains.kotlin:kotlin-bom:1.9.24")
     implementation "androidx.appcompat:appcompat:1.7.0"
 }
