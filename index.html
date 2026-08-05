@@ -111,6 +111,8 @@
   .aviso{border-left:3px solid var(--teal);background:var(--soft);border-radius:0 8px 8px 0;
     padding:16px 18px;font-size:14px;color:var(--mut);}
   .aviso b{color:var(--ink);}
+  /* Oferecer o download do APK para quem já está dentro do app não faz sentido. */
+  html[data-app] .so-site{display:none !important;}
 
   /* Modelo */
   .model-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:36px;}
@@ -165,6 +167,11 @@
   .foot .brand img{height:24px;}
   .disclaimer{font-size:12.5px;max-width:640px;}
 </style>
+<script>
+  // Mesma marca que o app Android acrescenta ao User-Agent. Roda antes da
+  // renderização para o conteúdo de site não piscar dentro do app.
+  if (/VoxAIApp/.test(navigator.userAgent)) document.documentElement.setAttribute("data-app", "1");
+</script>
 </head>
 <body>
 
@@ -174,7 +181,7 @@
     <nav class="top-links">
       <a class="navlink" href="#projeto">O projeto</a>
       <a class="navlink" href="#como">Como funciona</a>
-      <a class="navlink" href="#app">App Android</a>
+      <a class="navlink so-site" href="#app">App Android</a>
       <a class="navlink" href="#graus">Graus</a>
       <a class="navlink" href="#modelo">O modelo</a>
       <a class="navlink" href="#equipe">Equipe</a>
@@ -198,8 +205,8 @@
           <a class="btn btn-primary" href="teste.html">Iniciar teste</a>
           <a class="btn btn-outline" href="#como">Como funciona</a>
         </div>
-        <p class="note">O teste roda no navegador, sem cadastro. Quem usa Android também pode
-        <a href="#app">instalar o aplicativo</a>.</p>
+        <p class="note">O teste roda no navegador, sem cadastro.<span class="so-site"> Quem usa
+        Android também pode <a href="#app">instalar o aplicativo</a>.</span></p>
       </div>
       <div class="hero-fig">
         <img src="logo.png" alt="Logotipo do VoxAI" />
@@ -277,7 +284,7 @@
   </div>
 </section>
 
-<section id="app">
+<section id="app" class="so-site">
   <div class="wrap">
     <div class="kicker">Android</div>
     <h2 class="sec-title">Instale o VoxAI no celular</h2>

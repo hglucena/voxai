@@ -141,14 +141,26 @@
   .cmp-ref{font-size:11.5px;color:var(--mut);margin-top:6px;font-variant-numeric:tabular-nums;}
   .cmp-src{font-size:11.5px;color:var(--mut);text-align:left;margin:16px 0 0;opacity:.9;}
   .cmp-sep{font-size:12px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:24px 0 10px;text-align:left;}
+
+  /* Dentro do app Android o site é a própria casca, então some tudo que leva de
+     volta para a vitrine (inclusive a seção que oferece o download do APK). */
+  html[data-app] .so-site{display:none !important;}
+  /* A logo do topo vira só identidade: no app não há para onde ela levar. */
+  html[data-app] header.top .brand{pointer-events:none;}
+  /* Sem o "Sobre o projeto" ao lado, refazer o teste passa a ser a ação principal. */
+  html[data-app] #btn-again{background:var(--secondary);color:#fff;}
 </style>
+<script>
+  // Roda antes da renderização para o conteúdo de site não piscar no app.
+  if (/VoxAIApp/.test(navigator.userAgent)) document.documentElement.setAttribute("data-app", "1");
+</script>
 </head>
 <body>
 
 <header class="top">
   <div class="top-inner">
     <a class="brand" href="index.html"><img src="logo.png" alt="VoxAI" /> VoxAI</a>
-    <a class="back" href="index.html">Voltar ao site</a>
+    <a class="back so-site" href="index.html">Voltar ao site</a>
   </div>
 </header>
 
@@ -160,7 +172,7 @@
       <div class="card center">
         <div class="eyebrow">Triagem vocal</div>
         <h1>Teste vocal em duas gravações</h1>
-        <p class="sub">Sem cadastro e sem instalação. A análise acontece na hora e não guardamos a sua gravação de voz.</p>
+        <p class="sub">Sem cadastro<span class="so-site"> e sem instalação</span>. A análise acontece na hora e não guardamos a sua gravação de voz.</p>
         <div class="steps-intro">
           <div class="si"><div class="n">1</div><div><b>Vogal /a/ sustentada</b><span>Faça um “ahhhhhhhh” bem longo, por uns 5 segundos, tentando não variar o tom.</span></div></div>
           <div class="si"><div class="n">2</div><div><b>Contagem de 1 a 10</b><span>Conte “um, dois, três…” até dez, em ritmo e volume naturais.</span></div></div>
@@ -186,7 +198,7 @@
         <div class="center">
           <div class="eyebrow">Antes de começar</div>
           <h2>Algumas perguntas rápidas</h2>
-          <p class="sub" id="quest-sub">Ajudam a interpretar o resultado. As respostas ficam só neste navegador: nada é enviado nem armazenado.</p>
+          <p class="sub" id="quest-sub">Ajudam a interpretar o resultado. As respostas ficam só neste aparelho: nada é enviado nem armazenado.</p>
         </div>
         <div class="form">
           <div class="field">
@@ -307,7 +319,7 @@
         </details>
         <div class="row" style="margin-top:24px;">
           <button id="btn-again" class="btn btn-ghost">Refazer teste</button>
-          <a class="btn btn-primary" href="index.html">Sobre o projeto</a>
+          <a class="btn btn-primary so-site" href="index.html">Sobre o projeto</a>
         </div>
         <p class="disc">Esta é uma triagem automatizada em fase de pesquisa, não um diagnóstico. A avaliação final é sempre de um fonoaudiólogo.</p>
       </div>
@@ -544,7 +556,7 @@ function recordTask(cfg){
       body.innerHTML = '<h2>'+cfg.titulo+'</h2><p class="sub">Permita o acesso ao microfone para começar.</p>'+barsHTML();
       let micStream;
       try{ micStream = await openMic(); }
-      catch(e){ stopCapture(); return fail("Não consegui acessar o microfone. Verifique a permissão do navegador e tente de novo.", true); }
+      catch(e){ stopCapture(); return fail("Não consegui acessar o microfone. Verifique a permissão de microfone e tente de novo.", true); }
       // Mede o ruído do ambiente com o usuário em silêncio (referência do SNR).
       body.innerHTML = '<h2>'+cfg.titulo+'</h2><p class="sub">Medindo o ruído do ambiente. Fique em silêncio um instante.</p>'+barsHTML();
       noiseFloor = await medirRuido(micStream, 0.8);
@@ -695,7 +707,7 @@ function initQuest(){
   const idade=$("q-idade"), warn=$("idade-warn"), cont=$("q-continue");
   if(COLETA_URL){
     $("coleta-field").style.display="";
-    $("quest-sub").textContent="Ajudam a interpretar o resultado. Suas respostas ficam neste navegador. Só enviamos algo se você autorizar abaixo.";
+    $("quest-sub").textContent="Ajudam a interpretar o resultado. Suas respostas ficam neste aparelho. Só enviamos algo se você autorizar abaixo.";
   }
   let warnTimer=null;
   function foraFaixa(){

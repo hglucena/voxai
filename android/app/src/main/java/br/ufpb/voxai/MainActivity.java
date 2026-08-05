@@ -42,7 +42,14 @@ import androidx.core.content.ContextCompat;
 public class MainActivity extends AppCompatActivity {
 
     private static final String HOST = "hglucena.github.io";
-    private static final String INICIO = "https://hglucena.github.io/voxai/index.html";
+    /** O app abre direto no teste: a página inicial do site é vitrine, não faz sentido aqui. */
+    private static final String INICIO = "https://hglucena.github.io/voxai/teste.html";
+    /**
+     * Marca acrescentada ao User-Agent. É por ela que a página sabe que está rodando
+     * dentro do app e esconde o que só faz sentido no site (o "Voltar ao site", o
+     * "Sobre o projeto" e a seção que oferece o download deste mesmo APK).
+     */
+    private static final String MARCA_APP = "VoxAIApp/1";
     private static final int PEDIDO_MICROFONE = 1;
 
     private WebView web;
@@ -63,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         // sem isto o Android exigiria um gesto extra que o usuário não faz.
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        s.setUserAgentString(s.getUserAgentString() + " " + MARCA_APP);
         s.setSupportZoom(false);
         s.setBuiltInZoomControls(false);
         // O site já é responsivo; sem isto o WebView renderiza no modo "desktop".
